@@ -1,0 +1,22 @@
+{
+  "name": "oss-js-upload",
+  "version": "0.1.0",
+  "description": "",
+  "main": "oss-js-upload.js",
+  "keywords": [],
+  "license": "MIT",
+  "homepage": "https://github.com/aliyun-UED/oss-js-upload",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "spark-md5": "~0.0.5",
+    "async": "~1.2.1",
+    "jsSHA": "~2.0.0",
+    "jquery": "~1.10.2"
+  }
+}

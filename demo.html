@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Demo</title>
+  <script src="bower_components/jquery/jquery.js"></script>
+  <script src="bower_components/spark-md5/spark-md5.js"></script>
+  <script src="bower_components/jsSHA/src/sha1.js"></script>
+  <script src="bower_components/async/lib/async.js"></script>
+
+  <script src="src/oss-js-upload.js"></script>
+</head>
+<body>
+
+<form action="">
+  <input type="file" name="file" id="files">
+</form>
+
+<script>
+
+  var ossUpload = new OssUpload({
+    bucket: 'chylvina',
+    // 根据你的 oss 实例所在地区选择填入
+    // 杭州：http://oss-cn-hangzhou.aliyuncs.com
+    // 北京：http://oss-cn-beijing.aliyuncs.com
+    // 青岛：http://oss-cn-qingdao.aliyuncs.com
+    // 深圳：http://oss-cn-shenzhen.aliyuncs.com
+    // 香港：http://oss-cn-hongkong.aliyuncs.com
+    endpoint: 'http://oss-cn-hangzhou.aliyuncs.com',
+    stsToken: {
+      "FederatedUser": {
+        "FederatedUserId": "31611321:chylvina",
+        "Arn": "acs:sts::31611321:federated-user/chylvina"
+      },
+      "RequestId": "CCDEB862-6B6F-4C07-B656-D2FD66B18B01",
+      "Credentials": {
+        "AccessKeySecret": "83sSHf9YPLVG0LwN27YZzSZHkJqOsBccs8QvQD0z",
+        "AccessKeyId": "STS.xfNBD1EeZLLgiC2B5wW2",
+        "Expiration": "2015-06-28T18:32:43.615Z",
+        "SecurityToken": "CAESjgIIARKAATEbViakGTW0KGK2eg2NsOuh6dRa9qzgtJfBKqE8XONNf33mNxpwwEHbagapsSuSwpMXQgGbapw0f23AyQU3qNZZulfLOAIVLsMJ5fXv3Ig7ceXILKA29zs8VnDiHouM3NN9sN4vRv+CJKbezWvUw11XxeBeIudnSF8DgvqHz7U4GhhTVFMueGZOQkQxRWVaTExnaUMyQjV3VzIiCDMxNjExMzIxKghjaHlsdmluYTDfxsXb4yk6BlJzYU1ENUJKCgExGkUKBUFsbG93EhsKDEFjdGlvbkVxdWFscxIGQWN0aW9uGgMKASoSHwoOUmVzb3VyY2VFcXVhbHMSCFJlc291cmNlGgMKASo="
+      }
+    }
+  });
+
+  $('#files').change(function (evt) {
+    var files = evt.target.files;
+
+    for (var i = 0; i < files.length; i++) {
+
+      ossUpload.upload({
+        file: files[i],
+        key: 'oss/folder/file_key',
+        // OSS支持4个 HTTP RFC2616(https://www.ietf.org/rfc/rfc2616.txt)协议规定的Header 字段：
+        // Cache-Control、Expires、Content-Encoding、Content-Disposition。
+        // 如果上传Object时设置了这些Header，则这个Object被下载时，相应的Header值会被自动设置成上传时的值
+        httpHeaders: {
+          'Cache-Control': 'max-age=3600',
+          'Expires': '',
+          'Content-Encoding': '',
+          'Content-Disposition': ''
+        },
+        xOssHeaders: {
+        },
+        onerror: function (evt) {
+          console.log(evt);
+        },
+        onprogress: function (evt) {
+          console.log(evt);
+        },
+        oncomplete: function (res) {
+          console.log(res);
+        }
+      });
+    }
+
+    $(evt.target).val('');
+
+  });
+</script>
+</body>
+</html>
