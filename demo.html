@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Demo</title>
-  <script src="bower_components/jquery/jquery.js"></script>
   <script src="bower_components/spark-md5/spark-md5.js"></script>
   <script src="bower_components/jsSHA/src/sha1.js"></script>
   <script src="bower_components/async/lib/async.js"></script>
@@ -19,7 +18,7 @@
 <script>
 
   var ossUpload = new OssUpload({
-    bucket: 'chylvina',
+    bucket: '需要上传的 oss bucket',
     // 根据你的 oss 实例所在地区选择填入
     // 杭州：http://oss-cn-hangzhou.aliyuncs.com
     // 北京：http://oss-cn-beijing.aliyuncs.com
@@ -27,55 +26,59 @@
     // 深圳：http://oss-cn-shenzhen.aliyuncs.com
     // 香港：http://oss-cn-hongkong.aliyuncs.com
     endpoint: 'http://oss-cn-hangzhou.aliyuncs.com',
+    // 注意: 虽然使用 accessKeyId 和 secretAccessKey 可以进行上传, 但是存在泄露风险, 因此强烈建议使用下面的 STS token
+    // 只有在确认不会出现泄露风险的情况下, 才使用 aliyunCredential
+    aliyunCredential: {
+      "accessKeyId": "在阿里云OSS申请的 accessKeyId",
+      "secretAccessKey": "在阿里云OSS申请的 secretAccessKey",
+    },
     stsToken: {
       "FederatedUser": {
         "FederatedUserId": "31611321:chylvina",
         "Arn": "acs:sts::31611321:federated-user/chylvina"
       },
-      "RequestId": "CCDEB862-6B6F-4C07-B656-D2FD66B18B01",
+      "RequestId": "06F7B497-4F66-48FC-9966-F6977C410543",
       "Credentials": {
-        "AccessKeySecret": "83sSHf9YPLVG0LwN27YZzSZHkJqOsBccs8QvQD0z",
-        "AccessKeyId": "STS.xfNBD1EeZLLgiC2B5wW2",
-        "Expiration": "2015-06-28T18:32:43.615Z",
-        "SecurityToken": "CAESjgIIARKAATEbViakGTW0KGK2eg2NsOuh6dRa9qzgtJfBKqE8XONNf33mNxpwwEHbagapsSuSwpMXQgGbapw0f23AyQU3qNZZulfLOAIVLsMJ5fXv3Ig7ceXILKA29zs8VnDiHouM3NN9sN4vRv+CJKbezWvUw11XxeBeIudnSF8DgvqHz7U4GhhTVFMueGZOQkQxRWVaTExnaUMyQjV3VzIiCDMxNjExMzIxKghjaHlsdmluYTDfxsXb4yk6BlJzYU1ENUJKCgExGkUKBUFsbG93EhsKDEFjdGlvbkVxdWFscxIGQWN0aW9uGgMKASoSHwoOUmVzb3VyY2VFcXVhbHMSCFJlc291cmNlGgMKASo="
+        "AccessKeySecret": "YxPglqqauWmCB5JrVtQkUvEgzl5t10tISDR7mg1C",
+        "AccessKeyId": "STS.c7HAijcjQ6qTBIg3RGNh",
+        "Expiration": "2015-06-29T04:38:28.262Z",
+        "SecurityToken": "CAESjgIIARKAAaPivErZqHb6/mG7o9Llu8mV70sVOrIMB5b0i/coA1MtAUa7M+Psvh62fnMAisp0Pvclzcg7EgJok8mBSNK3khAtKDhsN/915oQm9Flx5/PFYbjexVPzgxw6QgJ/a0GGMtKnpydlQ9q5JWekpumDCM/8sAsQwlNRX4rBmUqca+oCGhhTVFMuYzdIQWlqY2pRNnFUQklnM1JHTmgiCDMxNjExMzIxKghjaHlsdmluYTCm7e/s4yk6BlJzYU1ENUJKCgExGkUKBUFsbG93EhsKDEFjdGlvbkVxdWFscxIGQWN0aW9uGgMKASoSHwoOUmVzb3VyY2VFcXVhbHMSCFJlc291cmNlGgMKASo="
       }
     }
   });
 
-  $('#files').change(function (evt) {
-    var files = evt.target.files;
+  document.getElementById("files")
+      .addEventListener('change', function (evt) {
+        var files = evt.target.files;
 
-    for (var i = 0; i < files.length; i++) {
+        for (var i = 0; i < files.length; i++) {
 
-      ossUpload.upload({
-        file: files[i],
-        key: 'oss/folder/file_key',
-        // OSS支持4个 HTTP RFC2616(https://www.ietf.org/rfc/rfc2616.txt)协议规定的Header 字段：
-        // Cache-Control、Expires、Content-Encoding、Content-Disposition。
-        // 如果上传Object时设置了这些Header，则这个Object被下载时，相应的Header值会被自动设置成上传时的值
-        httpHeaders: {
-          'Cache-Control': 'max-age=3600',
-          'Expires': '',
-          'Content-Encoding': '',
-          'Content-Disposition': ''
-        },
-        xOssHeaders: {
-        },
-        onerror: function (evt) {
-          console.log(evt);
-        },
-        onprogress: function (evt) {
-          console.log(evt);
-        },
-        oncomplete: function (res) {
-          console.log(res);
+          ossUpload.upload({
+            file: files[i],
+            key: 'oss/folder/file_key',
+            // OSS支持4个 HTTP RFC2616(https://www.ietf.org/rfc/rfc2616.txt)协议规定的Header 字段：
+            // Cache-Control、Expires、Content-Encoding、Content-Disposition。
+            // 如果上传Object时设置了这些Header，则这个Object被下载时，相应的Header值会被自动设置成上传时的值
+            httpHeaders: {
+              'Cache-Control': 'max-age=3600',
+              'Expires': '',
+              'Content-Encoding': '',
+              'Content-Disposition': ''
+            },
+            xOssHeaders: {},
+            onerror: function (evt) {
+              console.log(evt);
+            },
+            onprogress: function (evt) {
+              console.log(evt);
+            },
+            oncomplete: function (res) {
+              console.log(res);
+            }
+          });
         }
+
       });
-    }
-
-    $(evt.target).val('');
-
-  });
 </script>
 </body>
 </html>

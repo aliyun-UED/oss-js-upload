@@ -13,16 +13,18 @@ var sts = new ALY.STS({
 
 app.use(serveStatic(__dirname, {'index': ['demo.html']}));
 
+// STS 文档 http://docs.aliyun.com/#/pub/ram/sts-user-guide/intro
 app.get('/token', function (req, res) {
   sts.getFederationToken({
     StsVersion: '1',
     Action: 'GetFederationToken',
-    Name: 'chylvina',
+    Name: 'username',
+    // policy 规则文档: http://docs.aliyun.com/#/pub/ram/ram-user-guide/policy_reference&struct_def
     Policy: '{"Version":"1","Statement":[{"Effect":"Allow", "Action":"*", "Resource":"*"}]}',
     DurationSeconds: 3000
   }, function (err, data) {
     if(err) {
-      return res.send(500, 'something error');
+      return res.send(500, err);
     }
 
     res.json(data);

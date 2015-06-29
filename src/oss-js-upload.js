@@ -276,6 +276,11 @@
 
     _extend(this._config, config);
 
+    if(!this._config.aliyunCredential && !this._config.stsToken) {
+      console.log('需要 stsToken');
+      return;
+    }
+
     if (!this._config.endpoint) {
       console.log('需要 endpoint');
       return;
@@ -345,26 +350,40 @@
         parts.push(chunkInfo.md5);    // Content-MD5
         parts.push(contentType);      // Content-Type
         parts.push(dateString);       // Date
-        parts.push('x-oss-security-token:' + self._config.stsToken.Credentials.SecurityToken);   // Key
+        if(self._config.stsToken) {
+          parts.push('x-oss-security-token:' + self._config.stsToken.Credentials.SecurityToken);   // Key
+        }
         parts.push('/' + self._config.bucket + '/' + options.key);   // Key
         var stringToSign = parts.join('\n');
         var shaObj = new jsSHA("SHA-1", "TEXT");
-        shaObj.setHMACKey(self._config.stsToken.Credentials.AccessKeySecret, "TEXT");
+        if(self._config.stsToken) {
+          shaObj.setHMACKey(self._config.stsToken.Credentials.AccessKeySecret, "TEXT");
+        }
+        else {
+          shaObj.setHMACKey(self._config.aliyunCredential.secretAccessKey, "TEXT");
+        }
         shaObj.update(stringToSign);
         var signature = shaObj.getHMAC("B64");
 
         var queryParams = {
           Expires: dateString,
-          OSSAccessKeyId: self._config.stsToken.Credentials.AccessKeyId,
           Signature: signature
         };
+        if(self._config.stsToken) {
+          queryParams.OSSAccessKeyId = self._config.stsToken.Credentials.AccessKeyId;
+        }
+        else {
+          queryParams.OSSAccessKeyId = self._config.aliyunCredential.accessKeyId;
+        }
         var querystring = queryParamsToString(queryParams);
 
         var xhr = new XMLHttpRequest();
         xhr.open('PUT', self._config.endpoint.protocol + '://' + self._config.bucket + '.' + self._config.endpoint.host + '/' + options.key + '?' + querystring, true);
         xhr.setRequestHeader("Content-MD5", chunkInfo.md5);
         xhr.setRequestHeader("Content-Type", contentType);
-        xhr.setRequestHeader("x-oss-security-token", self._config.stsToken.Credentials.SecurityToken);
+        if(self._config.stsToken) {
+          xhr.setRequestHeader("x-oss-security-token", self._config.stsToken.Credentials.SecurityToken);
+        }
         xhr.onreadystatechange = function (evt) {
           if (xhr.readyState == 4) {
             if (xhr.status == 200) {
@@ -388,7 +407,7 @@
     ], function (err, res) {
       if (err) {
         if (typeof options.onerror == 'function') {
-          options.onerror(evt);
+          options.onerror(err);
         }
         return;
       }
