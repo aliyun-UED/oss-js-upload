@@ -68,20 +68,22 @@
     var escape = uriEscape;
 
     for (var name in params) {
-      var value = params[name];
-      var ename = escape(name);
-      var result = ename;
-      if (Object.prototype.toString.call(value) === '[object Array]') {
-        var vals = [];
-        arrayEach(value, function (item) {
-          vals.push(escape(item));
-        });
-        result = ename + '=' + vals.sort().join('&' + ename + '=');
+      if (Object.prototype.hasOwnProperty.call(params, name)) {
+        var value = params[name];
+        var ename = escape(name);
+        var result = ename;
+        if (Object.prototype.toString.call(value) === '[object Array]') {
+          var vals = [];
+          arrayEach(value, function (item) {
+            vals.push(escape(item));
+          });
+          result = ename + '=' + vals.sort().join('&' + ename + '=');
+        }
+        else if (value !== undefined && value !== null) {
+          result = ename + '=' + escape(value);
+        }
+        items.push(result);
       }
-      else if (value !== undefined && value !== null) {
-        result = ename + '=' + escape(value);
-      }
-      items.push(result);
     }
 
     return items.join('&');
@@ -244,24 +246,10 @@
 
   var _extend = function (dst, src) {
     for (var i in src) {
-      dst[i] = src[i];
-    }
-  };
-
-  var sortPropertiesByKey = function (obj) {
-    var keys = [];
-    var sorted_obj = {};
-    for (var key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        keys.push(key);
+      if (Object.prototype.hasOwnProperty.call(src, i)) {
+        dst[i] = src[i];
       }
     }
-    keys.sort();
-    for (var i = 0; i < keys.length; i++) {
-      var k = keys[i];
-      sorted_obj[k] = obj[k];
-    }
-    return sorted_obj;
   };
 
   function OssUpload(config) {
@@ -351,7 +339,10 @@
         parts.push(contentType);      // Content-Type
         parts.push(dateString);       // Date
         if(self._config.stsToken) {
-          parts.push('x-oss-security-token:' + self._config.stsToken.Credentials.SecurityToken);   // Key
+          parts.push('x-oss-security-token:' + self._config.stsToken.Credentials.SecurityToken);
+        }
+        if(options.xOssHeaders && options.xOssHeaders['x-oss-server-side-encryption']) {
+          parts.push('x-oss-server-side-encryption:' + options.xOssHeaders['x-oss-server-side-encryption']);
         }
         parts.push('/' + self._config.bucket + '/' + options.key);   // Key
         var stringToSign = parts.join('\n');
@@ -381,6 +372,16 @@
         xhr.open('PUT', self._config.endpoint.protocol + '://' + self._config.bucket + '.' + self._config.endpoint.host + '/' + options.key + '?' + querystring, true);
         xhr.setRequestHeader("Content-MD5", chunkInfo.md5);
         xhr.setRequestHeader("Content-Type", contentType);
+        if(options.httpHeaders) {
+          for(var i in options.httpHeaders) {
+            if(Object.prototype.hasOwnProperty.call(options.httpHeaders, i)) {
+              xhr.setRequestHeader(i, options.httpHeaders[i]);
+            }
+          }
+        }
+        if(options.xOssHeaders && options.xOssHeaders['x-oss-server-side-encryption']) {
+          xhr.setRequestHeader("x-oss-server-side-encryption", options.xOssHeaders['x-oss-server-side-encryption']);
+        }
         if(self._config.stsToken) {
           xhr.setRequestHeader("x-oss-security-token", self._config.stsToken.Credentials.SecurityToken);
         }
