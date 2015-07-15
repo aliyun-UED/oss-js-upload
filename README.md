@@ -16,11 +16,10 @@
 - 支持5G以下单文件上传
 - 支持文件上传 md5 校验, 保证调用的安全性.
 
-## 安装
+## 使用
 
-```javascript
-bower install oss-js-upload
-```
+需要先配置 oss bucket 的 cors. 在测试时, 可以将 "来源", "Allowed Header" 配置为 * , 将 "Method" 全部勾选. 调试通过后, 根据需要
+最小化相关配置
 
 参考 demo.html, 引用 oss-js-upload 的三个依赖和 src/oss-js-upload.js 本身
 - spark-md5.js
@@ -28,7 +27,7 @@ bower install oss-js-upload
 - async.js
 - src/oss-js-upload.js
 
-## 使用 demo
+## 使用 demo (需要 Node.js 环境)
 
 - 打开 demoServer.js 填入 accessKeyId 和 secretAccessKey
 - 打开 demo.html 填入 bucket 和 endpoint 参数, 其他参数根据需要进行配置
