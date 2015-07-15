@@ -314,6 +314,7 @@
 
         var frOnload = function (e) {
           result.md5 = hexToBase64(SparkMD5.ArrayBuffer.hash(e.target.result));
+          result.blob = e.target.result;
           callback(null, result);
         };
         var frOnerror = function () {
@@ -324,8 +325,7 @@
           var fileReader = new FileReader();
           fileReader.onload = frOnload;
           fileReader.onerror = frOnerror;
-          result.blob = blobSlice.call(file);
-          fileReader.readAsArrayBuffer(result.blob);
+          fileReader.readAsArrayBuffer(blobSlice.call(file));
         }
 
         loadNext();
