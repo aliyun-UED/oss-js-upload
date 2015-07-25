@@ -23,8 +23,7 @@
         bin[bin.length] = ((a << 2) | (b >> 4)) & 255;
         bin[bin.length] = ((b << 4) | (c >> 2)) & 255;
         bin[bin.length] = ((c << 6) | d) & 255;
-      }
-      ;
+      };
       return String.fromCharCode.apply(null, bin).substr(0, bin.length + n - 4);
     };
 
@@ -306,117 +305,150 @@
 
     var self = this;
 
-    async.waterfall([
+    var readFile = function(callback) {
+      var result = {
+        chunksHash: {},
+        chunks: {}
+      };
+      var blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice;
+      var chunkSize = self._config.chunkSize;
+      var chunks = Math.ceil(file.size / chunkSize);
+      var currentChunk = 0;
+      var spark = new SparkMD5.ArrayBuffer();
 
-      function (callback) {
-        var result = {};
-        var blobSlice = File.prototype.slice || File.prototype.mozSlice || File.prototype.webkitSlice;
-
-        var frOnload = function (e) {
-          result.md5 = hexToBase64(SparkMD5.ArrayBuffer.hash(e.target.result));
-          result.blob = e.target.result;
+      var frOnload = function (e) {
+        result.chunksHash[currentChunk] = SparkMD5.ArrayBuffer.hash(e.target.result);
+        result.chunks[currentChunk] = e.target.result;
+        spark.append(e.target.result);
+        currentChunk++;
+        if (currentChunk < chunks) {
+          loadNext();
+        }
+        else {
+          result.entire = spark.end();
+          result.chunksNum = chunks;
+          result.file_size = file.size;
           callback(null, result);
-        };
-        var frOnerror = function () {
-          console.warn("oops, something went wrong.");
-        };
+        }
+      };
+      var frOnerror = function () {
+        console.warn("oops, something went wrong.");
+      };
 
-        function loadNext() {
-          var fileReader = new FileReader();
-          fileReader.onload = frOnload;
-          fileReader.onerror = frOnerror;
-          fileReader.readAsArrayBuffer(blobSlice.call(file));
-        }
+      function loadNext() {
+        var fileReader = new FileReader();
+        fileReader.onload = frOnload;
+        fileReader.onerror = frOnerror;
 
-        loadNext();
-      },
-      function (chunkInfo, callback) {
-        var dateString = parseInt(Math.floor((new Date()).getTime() / 1000) + 600, 10).toString();
-        var contentType = file.type || '';
-        var parts = [];
-        parts.push('PUT');
-        parts.push(chunkInfo.md5);    // Content-MD5
-        parts.push(contentType);      // Content-Type
-        parts.push(dateString);       // Date
-        if(self._config.stsToken) {
-          parts.push('x-oss-security-token:' + self._config.stsToken.Credentials.SecurityToken);
-        }
-        if(options.xOssHeaders && options.xOssHeaders['x-oss-server-side-encryption']) {
-          parts.push('x-oss-server-side-encryption:' + options.xOssHeaders['x-oss-server-side-encryption']);
-        }
-        parts.push('/' + self._config.bucket + '/' + options.key);   // Key
-        var stringToSign = parts.join('\n');
-        var shaObj = new jsSHA("SHA-1", "TEXT");
-        if(self._config.stsToken) {
-          shaObj.setHMACKey(self._config.stsToken.Credentials.AccessKeySecret, "TEXT");
-        }
-        else {
-          shaObj.setHMACKey(self._config.aliyunCredential.secretAccessKey, "TEXT");
-        }
-        shaObj.update(stringToSign);
-        var signature = shaObj.getHMAC("B64");
-
-        var queryParams = {
-          Expires: dateString,
-          Signature: signature
-        };
-        if(self._config.stsToken) {
-          queryParams.OSSAccessKeyId = self._config.stsToken.Credentials.AccessKeyId;
-        }
-        else {
-          queryParams.OSSAccessKeyId = self._config.aliyunCredential.accessKeyId;
-        }
-        var querystring = queryParamsToString(queryParams);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('PUT', self._config.endpoint.protocol + '://' + self._config.bucket + '.' + self._config.endpoint.host + '/' + options.key + '?' + querystring, true);
-        xhr.setRequestHeader("Content-MD5", chunkInfo.md5);
-        xhr.setRequestHeader("Content-Type", contentType);
-        if(options.httpHeaders) {
-          for(var i in options.httpHeaders) {
-            if(Object.prototype.hasOwnProperty.call(options.httpHeaders, i)) {
-              xhr.setRequestHeader(i, options.httpHeaders[i]);
-            }
-          }
-        }
-        if(options.xOssHeaders && options.xOssHeaders['x-oss-server-side-encryption']) {
-          xhr.setRequestHeader("x-oss-server-side-encryption", options.xOssHeaders['x-oss-server-side-encryption']);
-        }
-        if(self._config.stsToken) {
-          xhr.setRequestHeader("x-oss-security-token", self._config.stsToken.Credentials.SecurityToken);
-        }
-        xhr.onreadystatechange = function (evt) {
-          if (xhr.readyState == 4) {
-            if (xhr.status == 200) {
-              callback(null, evt);
-            }
-            else {
-              callback(evt);
-            }
-          }
-        };
-        if (typeof options.onprogress == 'function') {
-          xhr.upload.onprogress = function (evt) {
-            options.onprogress(evt);
-          };
-        }
-        xhr.onerror = function (evt) {
-          callback(evt);
-        };
-        xhr.send(chunkInfo.blob);
-      }
-    ], function (err, res) {
-      if (err) {
-        if (typeof options.onerror == 'function') {
-          options.onerror(err);
-        }
-        return;
+        var start = currentChunk * chunkSize,
+            end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
+        var blobPacket = blobSlice.call(file, start, end);
+        fileReader.readAsArrayBuffer(blobPacket);
       }
 
-      if (typeof options.oncomplete == 'function') {
-        options.oncomplete(res);
+      loadNext();
+    };
+
+    var uploadSingle = function(result, callback) {
+      var dateString = parseInt(Math.floor((new Date()).getTime() / 1000) + 600, 10).toString();
+      var contentType = file.type || '';
+      var parts = [];
+      parts.push('PUT');
+      parts.push(result.chunksHash[0]);    // Content-MD5
+      parts.push(contentType);      // Content-Type
+      parts.push(dateString);       // Date
+      if(self._config.stsToken) {
+        parts.push('x-oss-security-token:' + self._config.stsToken.Credentials.SecurityToken);
+      }
+      if(options.xOssHeaders && options.xOssHeaders['x-oss-server-side-encryption']) {
+        parts.push('x-oss-server-side-encryption:' + options.xOssHeaders['x-oss-server-side-encryption']);
+      }
+      parts.push('/' + self._config.bucket + '/' + options.key);   // Key
+      var stringToSign = parts.join('\n');
+      var shaObj = new jsSHA("SHA-1", "TEXT");
+      if(self._config.stsToken) {
+        shaObj.setHMACKey(self._config.stsToken.Credentials.AccessKeySecret, "TEXT");
+      }
+      else {
+        shaObj.setHMACKey(self._config.aliyunCredential.secretAccessKey, "TEXT");
+      }
+      shaObj.update(stringToSign);
+      var signature = shaObj.getHMAC("B64");
+
+      var queryParams = {
+        Expires: dateString,
+        Signature: signature
+      };
+      if(self._config.stsToken) {
+        queryParams.OSSAccessKeyId = self._config.stsToken.Credentials.AccessKeyId;
+      }
+      else {
+        queryParams.OSSAccessKeyId = self._config.aliyunCredential.accessKeyId;
+      }
+      var querystring = queryParamsToString(queryParams);
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('PUT', self._config.endpoint.protocol + '://' + self._config.bucket + '.' + self._config.endpoint.host + '/' + options.key + '?' + querystring, true);
+      xhr.setRequestHeader("Content-MD5", result.chunksHash[0]);
+      xhr.setRequestHeader("Content-Type", contentType);
+      if(options.httpHeaders) {
+        for(var i in options.httpHeaders) {
+          if(Object.prototype.hasOwnProperty.call(options.httpHeaders, i)) {
+            xhr.setRequestHeader(i, options.httpHeaders[i]);
+          }
+        }
+      }
+      if(options.xOssHeaders && options.xOssHeaders['x-oss-server-side-encryption']) {
+        xhr.setRequestHeader("x-oss-server-side-encryption", options.xOssHeaders['x-oss-server-side-encryption']);
+      }
+      if(self._config.stsToken) {
+        xhr.setRequestHeader("x-oss-security-token", self._config.stsToken.Credentials.SecurityToken);
+      }
+      xhr.onreadystatechange = function (evt) {
+        if (xhr.readyState == 4) {
+          if (xhr.status == 200) {
+            callback(null, evt);
+          }
+          else {
+            callback(evt);
+          }
+        }
+      };
+      if (typeof options.onprogress == 'function') {
+        xhr.upload.onprogress = function (evt) {
+          options.onprogress(evt);
+        };
+      }
+      xhr.onerror = function (evt) {
+        callback(evt);
+      };
+      xhr.send(result.chunks[0]);
+    };
+
+    var uploadMultipart = function() {
+
+    };
+
+    readFile(function(err, result) {
+      if(result.chunksNum == 1) {
+        uploadSingle(result, function(err, res) {
+          if (err) {
+            if (typeof options.onerror == 'function') {
+              options.onerror(err);
+            }
+            return;
+          }
+
+          if (typeof options.oncomplete == 'function') {
+            options.oncomplete(res);
+          }
+        })
+      }
+      else {
+
       }
     });
+
   };
 
   window.OssUpload = OssUpload;
