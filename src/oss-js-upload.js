@@ -317,7 +317,7 @@
       var spark = new SparkMD5.ArrayBuffer();
 
       var frOnload = function (e) {
-        result.chunksHash[currentChunk] = SparkMD5.ArrayBuffer.hash(e.target.result);
+        result.chunksHash[currentChunk] = hexToBase64(SparkMD5.ArrayBuffer.hash(e.target.result));
         result.chunks[currentChunk] = e.target.result;
         spark.append(e.target.result);
         currentChunk++;
