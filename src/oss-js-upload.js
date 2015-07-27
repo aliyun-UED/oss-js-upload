@@ -1,12 +1,6 @@
 'use strict';
 (function () {
 
-  if (typeof console === "undefined" || typeof console.log === "undefined") {
-    window.console = {};
-    window.console.log = function () {
-    };
-  }
-
   var detectIEVersion = function () {
     var v = 4,
         div = document.createElement('div'),
@@ -22,7 +16,7 @@
 
   var _extend = function (dst, src) {
     for (var i in src) {
-      if (Object.prototype.hasOwnProperty.call(src, i)) {
+      if (Object.prototype.hasOwnProperty.call(src, i) && src[i]) {
         dst[i] = src[i];
       }
     }
@@ -30,7 +24,7 @@
 
   function OssUpload(config) {
     if (!config) {
-      console.log('需要 config');
+      // console.log('需要 config');
       return;
     }
     this._config = {
@@ -38,19 +32,19 @@
     };
 
     if (this._config.chunkSize && this._config.chunkSize < 102400) {
-      console.log('chunkSize 不能小于 100KB');
+      // console.log('chunkSize 不能小于 100KB');
       return;
     }
 
     _extend(this._config, config);
 
     if (!this._config.aliyunCredential && !this._config.stsToken) {
-      console.log('需要 stsToken');
+      // console.log('需要 stsToken');
       return;
     }
 
     if (!this._config.endpoint) {
-      console.log('需要 endpoint');
+      // console.log('需要 endpoint');
       return;
     }
 
@@ -75,7 +69,7 @@
 
     var arr = this._config.endpoint.split('://');
     if (arr.length < 2) {
-      console.log('endpoint 格式错误');
+      // console.log('endpoint 格式错误');
       return;
     }
     this._config.endpoint = {
@@ -87,18 +81,24 @@
 
   OssUpload.prototype.upload = function (options) {
     if (!options) {
-      console.log('需要 options');
+      if (typeof options.onerror == 'function') {
+        options.onerror('需要 options');
+      }
       return;
     }
 
     if (!options.file) {
-      console.log('需要 file');
+      if (typeof options.onerror == 'function') {
+        options.onerror('需要 file');
+      }
       return;
     }
     var file = options.file;
 
     if (!options.key) {
-      console.log('需要 key');
+      if (typeof options.onerror == 'function') {
+        options.onerror('需要 key');
+      }
       return;
     }
     // 去掉 key 开头的 /
@@ -115,24 +115,23 @@
       var chunkSize = self._config.chunkSize;
       var chunksNum = Math.ceil(file.size / chunkSize);
       var currentChunk = 0;
-      //var spark = new SparkMD5.ArrayBuffer();
 
       var frOnload = function (e) {
-        //result.chunksHash[currentChunk] = hexToBase64(SparkMD5.ArrayBuffer.hash(e.target.result));
         result.chunks[currentChunk] = e.target.result;
-        //spark.append(e.target.result);
         currentChunk++;
         if (currentChunk < chunksNum) {
           loadNext();
         }
         else {
-          //result.entire = spark.end();
           result.file_size = file.size;
           callback(null, result);
         }
       };
       var frOnerror = function () {
-        console.warn("oops, something went wrong.");
+        console.error("读取文件失败");
+        if (typeof options.onerror == 'function') {
+          options.onerror("读取文件失败");
+        }
       };
 
       function loadNext() {
@@ -150,17 +149,19 @@
     };
 
     var uploadSingle = function (result, callback) {
-      self.oss.putObject({
+      var params = {
         Bucket: self._config.bucket,
         Key: options.key,
         Body: result.chunks[0],
         ContentType: file.type || ''
-      }, callback);
+      };
+      _extend(params, options.headers);
+
+      self.oss.putObject(params, callback);
     };
 
     var uploadMultipart = function (result, callback) {
-      var startTime = new Date();
-      var maxUploadTries = 3;
+      var maxUploadTries = options.maxRetry || 3;
       var uploadId;
       var loadedNum = 0;
 
@@ -169,28 +170,28 @@
       };
 
       var init = function () {
-        self.oss.createMultipartUpload({
+        var params = {
           Bucket: self._config.bucket,
           Key: options.key,
           ContentType: file.type || ''
-          //ContentDisposition: ''
-          //CacheControl: '',
-          //ContentEncoding: '',
-          //Expires: '',
-          //ServerSideEncryption: ''
-        }, function (mpErr, res) {
-          if (mpErr) {
-            console.log('Error!', mpErr);
-            return;
-          }
+        };
+        _extend(params, options.headers);
 
-          console.log("Got upload ID", res.UploadId);
-          uploadId = res.UploadId;
+        self.oss.createMultipartUpload(params,
+            function (mpErr, res) {
+              if (mpErr) {
+                // console.log('Error!', mpErr);
+                callback(mpErr);
+                return;
+              }
 
-          for(var i = 0; i < result.chunks.length; i++) {
-            uploadPart(i);
-          }
-        });
+              // console.log("Got upload ID", res.UploadId);
+              uploadId = res.UploadId;
+
+              for (var i = 0; i < result.chunks.length; i++) {
+                uploadPart(i);
+              }
+            });
       };
 
       var uploadPart = function (partNum) {
@@ -207,27 +208,28 @@
         var doUpload = function () {
           self.oss.uploadPart(partParams, function (multiErr, mData) {
             if (multiErr) {
-              console.log('multiErr, upload part error:', multiErr);
+              // console.log('multiErr, upload part error:', multiErr);
               if (tryNum > maxUploadTries) {
-                console.log('Failed uploading part: #', partParams.PartNumber)
+                console.log('上传分片失败: #', partParams.PartNumber);
+                callback(multiErr);
               }
               else {
-                console.log('Retrying upload of part: #', partParams.PartNumber)
+                console.log('重新上传分片: #', partParams.PartNumber);
                 tryNum++;
                 doUpload();
               }
               return;
             }
-            console.log(mData);
+            // console.log(mData);
             multipartMap.Parts[partNum] = {
               ETag: mData.ETag,
               PartNumber: partNum + 1
             };
-            console.log("Completed part", partNum + 1);
-            console.log('mData', mData);
+            // console.log("Completed part", partNum + 1);
+            // console.log('mData', mData);
 
             loadedNum++;
-            if(loadedNum == result.chunks.length) {
+            if (loadedNum == result.chunks.length) {
               complete();
             }
           });
@@ -238,7 +240,7 @@
       };
 
       var complete = function () {
-        console.log("Completing upload...");
+        // console.log("Completing upload...");
 
         var doneParams = {
           Bucket: self._config.bucket,
@@ -254,33 +256,24 @@
     };
 
     readFile(function (err, result) {
-      if (result.chunks.length == 1) {
-        uploadSingle(result, function (err, res) {
-          if (err) {
-            if (typeof options.onerror == 'function') {
-              options.onerror(err);
-            }
-            return;
+      var callback = function (err, res) {
+        if (err) {
+          if (typeof options.onerror == 'function') {
+            options.onerror(err);
           }
+          return;
+        }
 
-          if (typeof options.oncomplete == 'function') {
-            options.oncomplete(res);
-          }
-        })
+        if (typeof options.oncomplete == 'function') {
+          options.oncomplete(res);
+        }
+      };
+
+      if (result.chunks.length == 1) {
+        uploadSingle(result, callback)
       }
       else {
-        uploadMultipart(result, function (err, res) {
-          if (err) {
-            if (typeof options.onerror == 'function') {
-              options.onerror(err);
-            }
-            return;
-          }
-
-          if (typeof options.oncomplete == 'function') {
-            options.oncomplete(res);
-          }
-        });
+        uploadMultipart(result, callback);
       }
     });
 
