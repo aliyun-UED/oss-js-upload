@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Demo</title>
-  <script src="src/spark-md5.js"></script>
-  <script src="src/sha1.js"></script>
-  <script src="src/async.js"></script>
+  <script src="bower_components/aliyun-sdk/dist/aliyun-sdk.min.js"></script>
 
   <script src="src/oss-js-upload.js"></script>
 </head>
@@ -30,7 +28,7 @@
     // 只有在确认不会出现泄露风险的情况下, 才使用 aliyunCredential
     aliyunCredential: {
       "accessKeyId": "在阿里云OSS申请的 accessKeyId",
-      "secretAccessKey": "在阿里云OSS申请的 secretAccessKey",
+      "secretAccessKey": "在阿里云OSS申请的 secretAccessKey"
     },
     stsToken: {
       "FederatedUser": {
@@ -59,27 +57,21 @@
             file: files[i],
             // 必传参数, 文件上传到 oss 后的名称, 包含路径
             key: 'oss/folder/file_key',
+            maxRetry: 3,
             // OSS支持4个 HTTP RFC2616(https://www.ietf.org/rfc/rfc2616.txt)协议规定的Header 字段：
             // Cache-Control、Expires、Content-Encoding、Content-Disposition。
             // 如果上传Object时设置了这些Header，则这个Object被下载时，相应的Header值会被自动设置成上传时的值
             // 可选参数
-            httpHeaders: {
-              'Cache-Control': 'max-age=3600',
+            headers: {
+              'CacheControl': 'public',
               'Expires': '',
-              'Content-Encoding': '',
-              'Content-Disposition': ''
-            },
-            // oss 支持的 header, 目前仅支持 x-oss-server-side-encryption
-            xOssHeaders: {
-              // 指定oss创建object时的服务器端加密编码算法。 合法值：AES256
-              "x-oss-server-side-encryption": "AES256"
+              'ContentEncoding': '',
+              'ContentDisposition': '',
+              // oss 支持的 header, 目前仅支持 x-oss-server-side-encryption
+              'ServerSideEncryption': ''
             },
             // 文件上传失败后调用, 可选参数
             onerror: function (evt) {
-              console.log(evt);
-            },
-            // 文件上传进度调用, 可选参数
-            onprogress: function (evt) {
               console.log(evt);
             },
             // 文件上传成功调用, 可选参数

@@ -14,8 +14,6 @@
     "demo*"
   ],
   "dependencies": {
-    "spark-md5": "~0.0.5",
-    "async": "~1.2.1",
-    "jsSHA": "~2.0.0"
+    "aliyun-sdk": "*"
   }
 }
