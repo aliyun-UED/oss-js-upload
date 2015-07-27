@@ -24,6 +24,8 @@
     // 深圳：http://oss-cn-shenzhen.aliyuncs.com
     // 香港：http://oss-cn-hongkong.aliyuncs.com
     endpoint: 'http://oss-cn-hangzhou.aliyuncs.com',
+    // 如果文件大于 chunkSize 则分块上传, chunkSize 不能小于 100KB 即 102400
+    chunkSize: 2097152,
     // 注意: 虽然使用 accessKeyId 和 secretAccessKey 可以进行上传, 但是存在泄露风险, 因此强烈建议使用下面的 STS token
     // 只有在确认不会出现泄露风险的情况下, 才使用 aliyunCredential
     aliyunCredential: {
