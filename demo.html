@@ -15,75 +15,91 @@
 
 <script>
 
-  var ossUpload = new OssUpload({
-    bucket: '需要上传的 oss bucket',
-    // 根据你的 oss 实例所在地区选择填入
-    // 杭州：http://oss-cn-hangzhou.aliyuncs.com
-    // 北京：http://oss-cn-beijing.aliyuncs.com
-    // 青岛：http://oss-cn-qingdao.aliyuncs.com
-    // 深圳：http://oss-cn-shenzhen.aliyuncs.com
-    // 香港：http://oss-cn-hongkong.aliyuncs.com
-    endpoint: 'http://oss-cn-hangzhou.aliyuncs.com',
-    // 如果文件大于 chunkSize 则分块上传, chunkSize 不能小于 100KB 即 102400
-    chunkSize: 2097152,
-    // 注意: 虽然使用 accessKeyId 和 secretAccessKey 可以进行上传, 但是存在泄露风险, 因此强烈建议使用下面的 STS token
-    // 只有在确认不会出现泄露风险的情况下, 才使用 aliyunCredential
-    aliyunCredential: {
-      "accessKeyId": "在阿里云OSS申请的 accessKeyId",
-      "secretAccessKey": "在阿里云OSS申请的 secretAccessKey"
-    },
-    stsToken: {
-      "FederatedUser": {
-        "FederatedUserId": "31611321:chylvina",
-        "Arn": "acs:sts::31611321:federated-user/chylvina"
+  var init = function (stsToken) {
+    var ossUpload = new OssUpload({
+      bucket: '需要上传的 oss bucket',
+      // 根据你的 oss 实例所在地区选择填入
+      // 杭州：http://oss-cn-hangzhou.aliyuncs.com
+      // 北京：http://oss-cn-beijing.aliyuncs.com
+      // 青岛：http://oss-cn-qingdao.aliyuncs.com
+      // 深圳：http://oss-cn-shenzhen.aliyuncs.com
+      // 香港：http://oss-cn-hongkong.aliyuncs.com
+      endpoint: 'http://oss-cn-hangzhou.aliyuncs.com',
+      // 如果文件大于 chunkSize 则分块上传, chunkSize 不能小于 100KB 即 102400
+      chunkSize: 1048576,
+      // 注意: 虽然使用 accessKeyId 和 secretAccessKey 可以进行上传, 但是存在泄露风险, 因此强烈建议使用下面的 STS token
+      // 只有在确认不会出现泄露风险的情况下, 才使用 aliyunCredential
+      aliyunCredential: {
+        "accessKeyId": "在阿里云OSS申请的 accessKeyId",
+        "secretAccessKey": "在阿里云OSS申请的 secretAccessKey"
       },
-      "RequestId": "06F7B497-4F66-48FC-9966-F6977C410543",
-      "Credentials": {
-        "AccessKeySecret": "YxPglqqauWmCB5JrVtQkUvEgzl5t10tISDR7mg1C",
-        "AccessKeyId": "STS.c7HAijcjQ6qTBIg3RGNh",
-        "Expiration": "2015-06-29T04:38:28.262Z",
-        "SecurityToken": "CAESjgIIARKAAaPivErZqHb6/mG7o9Llu8mV70sVOrIMB5b0i/coA1MtAUa7M+Psvh62fnMAisp0Pvclzcg7EgJok8mBSNK3khAtKDhsN/915oQm9Flx5/PFYbjexVPzgxw6QgJ/a0GGMtKnpydlQ9q5JWekpumDCM/8sAsQwlNRX4rBmUqca+oCGhhTVFMuYzdIQWlqY2pRNnFUQklnM1JHTmgiCDMxNjExMzIxKghjaHlsdmluYTCm7e/s4yk6BlJzYU1ENUJKCgExGkUKBUFsbG93EhsKDEFjdGlvbkVxdWFscxIGQWN0aW9uGgMKASoSHwoOUmVzb3VyY2VFcXVhbHMSCFJlc291cmNlGgMKASo="
-      }
+      stsToken: stsToken
+      // 这是一个 stsToken 的样例
+//    {
+//      "FederatedUser": {
+//      "FederatedUserId": "31611321:chylvina",
+//          "Arn": "acs:sts::31611321:federated-user/chylvina"
+//      },
+//      "RequestId": "06F7B497-4F66-48FC-9966-F6977C410543",
+//        "Credentials": {
+//          "AccessKeySecret": "YxPglqqauWmCB5JrVtQkUvEgzl5t10tISDR7mg1C",
+//          "AccessKeyId": "STS.c7HAijcjQ6qTBIg3RGNh",
+//          "Expiration": "2015-06-29T04:38:28.262Z",
+//          "SecurityToken": "CAESjgIIARKAAaPivErZqHb6/mG7o9Llu8mV70sVOrIMB5b0i/coA1MtAUa7M+Psvh62fnMAisp0Pvclzcg7EgJok8mBSNK3khAtKDhsN/915oQm9Flx5/PFYbjexVPzgxw6QgJ/a0GGMtKnpydlQ9q5JWekpumDCM/8sAsQwlNRX4rBmUqca+oCGhhTVFMuYzdIQWlqY2pRNnFUQklnM1JHTmgiCDMxNjExMzIxKghjaHlsdmluYTCm7e/s4yk6BlJzYU1ENUJKCgExGkUKBUFsbG93EhsKDEFjdGlvbkVxdWFscxIGQWN0aW9uGgMKASoSHwoOUmVzb3VyY2VFcXVhbHMSCFJlc291cmNlGgMKASo="
+//      }
+//    }
+
+    });
+
+    document.getElementById("files")
+        .addEventListener('change', function (evt) {
+          var files = evt.target.files;
+
+          // 如果要上传大量文件, 需要自己控制并发
+          for (var i = 0; i < files.length; i++) {
+
+            ossUpload.upload({
+              // 必传参数, 需要上传的文件对象
+              file: files[i],
+              // 必传参数, 文件上传到 oss 后的名称, 包含路径
+              key: 'oss/folder/file_key',
+              // 上传失败后重试次数
+              maxRetry: 3,
+              // OSS支持4个 HTTP RFC2616(https://www.ietf.org/rfc/rfc2616.txt)协议规定的Header 字段：
+              // Cache-Control、Expires、Content-Encoding、Content-Disposition。
+              // 如果上传Object时设置了这些Header，则这个Object被下载时，相应的Header值会被自动设置成上传时的值
+              // 可选参数
+              headers: {
+                'CacheControl': 'public',
+                'Expires': '',
+                'ContentEncoding': '',
+                'ContentDisposition': '',
+                // oss 支持的 header, 目前仅支持 x-oss-server-side-encryption
+                'ServerSideEncryption': ''
+              },
+              // 文件上传失败后调用, 可选参数
+              onerror: function (evt) {
+                console.log(evt);
+              },
+              // 文件上传成功调用, 可选参数
+              oncomplete: function (res) {
+                console.log(res);
+              }
+            });
+          }
+
+        });
+  };
+
+  // 获取 stsToken
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState == 4) {
+      init(JSON.parse(xhr.responseText));
     }
-  });
-
-  document.getElementById("files")
-      .addEventListener('change', function (evt) {
-        var files = evt.target.files;
-
-        // 如果要上传大量文件, 需要自己控制并发
-        for (var i = 0; i < files.length; i++) {
-
-          ossUpload.upload({
-            // 必传参数, 需要上传的文件对象
-            file: files[i],
-            // 必传参数, 文件上传到 oss 后的名称, 包含路径
-            key: 'oss/folder/file_key',
-            maxRetry: 3,
-            // OSS支持4个 HTTP RFC2616(https://www.ietf.org/rfc/rfc2616.txt)协议规定的Header 字段：
-            // Cache-Control、Expires、Content-Encoding、Content-Disposition。
-            // 如果上传Object时设置了这些Header，则这个Object被下载时，相应的Header值会被自动设置成上传时的值
-            // 可选参数
-            headers: {
-              'CacheControl': 'public',
-              'Expires': '',
-              'ContentEncoding': '',
-              'ContentDisposition': '',
-              // oss 支持的 header, 目前仅支持 x-oss-server-side-encryption
-              'ServerSideEncryption': ''
-            },
-            // 文件上传失败后调用, 可选参数
-            onerror: function (evt) {
-              console.log(evt);
-            },
-            // 文件上传成功调用, 可选参数
-            oncomplete: function (res) {
-              console.log(res);
-            }
-          });
-        }
-
-      });
+  };
+  xhr.open('GET', '/token', true);
+  xhr.send(null);
 </script>
 </body>
 </html>

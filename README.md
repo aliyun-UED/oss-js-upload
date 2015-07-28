@@ -6,26 +6,48 @@
 ## 简介
 支持在在浏览器端直接上传文件到阿里云 OSS.
 
+注意, 从 0.2.0 版本开始, 将基于 [aliyun sdk js](https://github.com/aliyun-UED/aliyun-sdk-js) 开发. 请注意 demo.html 中的变化.
+
 后续将支持:
 - ie8, ie9 浏览器 (8月底)
-- 文件分块上传
 
 目前已经支持:
 - ie10以上 ie 浏览器, 以及其他主流浏览器(还未全面测试)
 - 支持使用阿里云 STS 临时 Token
 - 支持5G以下单文件上传
 - 支持文件上传 md5 校验, 保证调用的安全性.
+- 文件分块上传, 上传文件大小理论上无限制
 
 ## 使用
 
-需要先配置 oss bucket 的 cors. 在测试时, 可以将 "来源", "Allowed Header" 配置为 * , 将 "Method" 全部勾选. 调试通过后, 根据需要
-最小化相关配置
+### 配置 OSS
 
-参考 demo.html, 引用 oss-js-upload 的三个依赖和 src/oss-js-upload.js 本身
-- spark-md5.js
-- sha1.js
-- async.js
-- src/oss-js-upload.js
+需要先配置 oss bucket 的 cors. 在开发/调试时, 可以做如下配置
+
+- 将 "来源", "Allowed Header" 配置为 *
+- 将 "Method" 全部勾选
+- 如果需要进行文件分块上传, 需要将 "Expose Header" 配置为 etag 和 x-oss-request-id
+
+调试通过后, 根据需要最小化相关配置
+
+### 安装
+
+你可以通过如下两种方式中任意一种引入本项目：
+
+#### 1.bower
+```sh
+$ bower install oss-js-upload --save
+```
+
+#### 2.直接下载
+1.  下载本项目最新的 [Release](https://github.com/aliyun-UED/oss-js-upload/blob/master/src/oss-js-upload.js)
+2.  下载依赖 [aliyun-sdk](https://github.com/aliyun-UED/aliyun-sdk-js/blob/master/dist/aliyun-sdk.min.js)
+3.  通过 `<script src=""></script>` 标签以此引入文件，注意将依赖放在前面
+
+```html
+<script src="/path/to/aliyun-sdk/aliyun-sdk.min.js"></script>
+<script src="/path/to/oss-js-upload.js"></script>
+```
 
 ## 使用 demo (需要 Node.js 环境)
 

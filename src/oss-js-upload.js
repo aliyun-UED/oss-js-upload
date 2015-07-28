@@ -28,7 +28,7 @@
       return;
     }
     this._config = {
-      chunkSize: 2097152    // 2MB
+      chunkSize: 1048576    // 1MB
     };
 
     if (this._config.chunkSize && this._config.chunkSize < 102400) {
@@ -225,8 +225,8 @@
               ETag: mData.ETag,
               PartNumber: partNum + 1
             };
-            // console.log("Completed part", partNum + 1);
-            // console.log('mData', mData);
+             console.log("Completed part", partNum + 1);
+             //console.log('mData', mData);
 
             loadedNum++;
             if (loadedNum == result.chunks.length) {
