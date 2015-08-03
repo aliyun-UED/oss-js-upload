@@ -164,6 +164,8 @@
       var maxUploadTries = options.maxRetry || 3;
       var uploadId;
       var loadedNum = 0;
+      var latestUploadNum = -1;
+      var concurrency = 0;
 
       var multipartMap = {
         Parts: []
@@ -188,13 +190,22 @@
               // console.log("Got upload ID", res.UploadId);
               uploadId = res.UploadId;
 
-              for (var i = 0; i < result.chunks.length; i++) {
-                uploadPart(i);
-              }
+              uploadPart(0);
             });
       };
 
       var uploadPart = function (partNum) {
+        if(partNum >= result.chunks.length) {
+          return;
+        }
+
+        concurrency++;
+        if(latestUploadNum < partNum) {
+          latestUploadNum = partNum;
+        }
+        if(concurrency < self._config.concurrency && (partNum < (result.chunks.length - 1))) {
+          uploadPart(partNum + 1);
+        }
         var partParams = {
           Body: result.chunks[partNum],
           Bucket: self._config.bucket,
@@ -221,6 +232,8 @@
               return;
             }
             // console.log(mData);
+            concurrency--;
+
             multipartMap.Parts[partNum] = {
               ETag: mData.ETag,
               PartNumber: partNum + 1
@@ -231,6 +244,9 @@
             loadedNum++;
             if (loadedNum == result.chunks.length) {
               complete();
+            }
+            else {
+              uploadPart(latestUploadNum + 1);
             }
           });
         };
