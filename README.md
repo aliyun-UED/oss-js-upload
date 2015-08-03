@@ -42,7 +42,7 @@ $ bower install oss-js-upload --save
 #### 2.直接下载
 1.  下载本项目最新的 [Release](https://github.com/aliyun-UED/oss-js-upload/blob/master/src/oss-js-upload.js)
 2.  下载依赖 [aliyun-sdk](https://github.com/aliyun-UED/aliyun-sdk-js/blob/master/dist/aliyun-sdk.min.js)
-3.  通过 `<script src=""></script>` 标签以此引入文件，注意将依赖放在前面
+3.  通过 `<script src=""></script>` 标签引入文件，注意将依赖放在前面
 
 ```html
 <script src="/path/to/aliyun-sdk/aliyun-sdk.min.js"></script>
