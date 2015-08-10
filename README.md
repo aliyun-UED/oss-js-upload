@@ -52,6 +52,7 @@ $ bower install oss-js-upload --save
 
 - 打开 demoServer.js 填入 accessKeyId 和 secretAccessKey
 - 打开 demo.html 填入 bucket 和 endpoint 参数, 其他参数根据需要进行配置
+- 执行 npm install，安装 demo 依赖
 - 执行 node demoServer.js
 - 然后在浏览器中打开 http://localhost:3000/demo.html
 
