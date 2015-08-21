@@ -1,5 +1,8 @@
 # oss-js-upload
 
+## 注意
+阿里云 STS 下线 GetFederation 接口，导致 oss-js-upload 暂时无法使用，我会尽快更新新的实现方案
+
 ## 技术支持
 请加旺旺群：1489391962
 
