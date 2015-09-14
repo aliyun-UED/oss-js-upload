@@ -1,5 +1,8 @@
 # oss-js-upload
 
+## 注意
+阿里云 STS 下线 GetFederation 接口，导致 oss-js-upload 暂时无法使用，我会尽快更新新的实现方案
+
 ## 技术支持
 请加旺旺群：1489391962
 
@@ -11,7 +14,6 @@
 目前已经支持:
 - ie10及以上 ie 浏览器, 以及其他主流浏览器(还未全面测试)
 - 支持使用阿里云 STS 临时 Token
-- 支持5G以下单文件上传
 - 支持文件上传 md5 校验, 保证调用的安全性.
 - 文件分块上传, 上传文件大小理论上无限制
 
@@ -76,6 +78,7 @@ $ bower install oss-js-upload --save
 
 - 打开 demoServer.js 填入上面记录下来的 accessKeyId, secretAccessKey, accountId, roleARN 和 resource
 - 打开 demo.html 填入 bucket 和 endpoint 参数, 其他参数根据需要进行配置
+- 执行 npm install，安装 demo 依赖
 - 执行 node demoServer.js
 - 然后在浏览器中打开 http://localhost:3000/demo.html
 
