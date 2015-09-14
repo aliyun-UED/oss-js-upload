@@ -8,11 +8,8 @@
 
 注意, 从 0.2.0 版本开始, 将基于 [aliyun sdk js](https://github.com/aliyun-UED/aliyun-sdk-js) 开发. 请注意 demo.html 中的变化.
 
-后续将支持:
-- ie8, ie9 浏览器 (8月底)
-
 目前已经支持:
-- ie10以上 ie 浏览器, 以及其他主流浏览器(还未全面测试)
+- ie10及以上 ie 浏览器, 以及其他主流浏览器(还未全面测试)
 - 支持使用阿里云 STS 临时 Token
 - 支持5G以下单文件上传
 - 支持文件上传 md5 校验, 保证调用的安全性.
@@ -29,6 +26,31 @@
 - 如果需要进行文件分块上传, 需要将 "Expose Header" 配置为 etag 和 x-oss-request-id
 
 调试通过后, 根据需要最小化相关配置
+
+### 配置 RAM
+
+从安全角度出发, 阿里云 sts 服务停掉了 getFederation 接口, 建议使用新的, 更安全的 assumeRole 接口. 原先正在使用 getFederation 接口
+的用户可以继续使用, 但是建议更新到 assumeRole 接口.
+
+#### 配置方法一
+
+使用 RAM 的 Open API 进行配置
+
+- 打开本代码中的 setupRAM.js
+- 在阿里云控制台中找到自己账号的 id 并填入
+- node setupRAM.js
+- 如果创建成功, 会打印出 assumeRole 所需的 accessKeyId, accessKeySecret 和 roleARN, 记录下来
+
+#### 配置方法二
+
+在阿里云 RAM 控制台也可以进行配置, 但是目前 RAM 控制台处于公测阶段, 需要申请公测资格, 因此推荐使用方法一
+
+- 打开 RAM 控制台
+- 新建一个用户
+- 为用户添加 AliyunSTSAssumeRoleAccess 权限
+- 为用户创建一对 AK, 记录下这个 AK, 控制台不会为你保存
+- 新建一个角色
+- 为角色添加 AliyunOSSFullAccess 权限, 记录下角色 ARN
 
 ### 安装
 
@@ -49,9 +71,10 @@ $ bower install oss-js-upload --save
 <script src="/path/to/oss-js-upload.js"></script>
 ```
 
+
 ## 使用 demo (需要 Node.js 环境)
 
-- 打开 demoServer.js 填入 accessKeyId 和 secretAccessKey
+- 打开 demoServer.js 填入上面记录下来的 accessKeyId, secretAccessKey, accountId, roleARN 和 resource
 - 打开 demo.html 填入 bucket 和 endpoint 参数, 其他参数根据需要进行配置
 - 执行 node demoServer.js
 - 然后在浏览器中打开 http://localhost:3000/demo.html
