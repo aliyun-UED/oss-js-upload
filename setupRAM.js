@@ -1,8 +1,8 @@
 var async = require('async');
 var ALY = require('aliyun-sdk');
 var ram = new ALY.RAM({
-      accessKeyId: 'YjCncGEFtB7WnaoT',
-      secretAccessKey: 'tfzqLosYIkoxf0fTr4lniTdhr7SaIz',
+      accessKeyId: '在阿里云申请的 AccessKey',
+      secretAccessKey: '在阿里云申请的 AccessKeySecret',
       endpoint: 'https://ram.aliyuncs.com',
       apiVersion: '2015-05-01'
     }
