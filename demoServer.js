@@ -11,7 +11,7 @@ var sts = new ALY.STS({
     }
 );
 // 必需要准备账号 ID, 可以在 https://account.console.aliyun.com/#/secure 找到
-var accountId = '31611321';
+var accountId = '账号 ID';
 var roleARN = '在设置 RAM 时得到的 roleARN';
 // 授权访问的资源表达式
 // 如果允许用户操作整个 Bucket, 则为 bucket_name/*
