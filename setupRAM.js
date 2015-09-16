@@ -9,7 +9,7 @@ var ram = new ALY.RAM({
 );
 
 // 必需要准备账号 ID, 可以在 https://account.console.aliyun.com/#/secure 找到
-var accountId = '31611321';
+var accountId = '账号 ID';
 // 创建的用户的名称, 可以自己设置
 var userName = 'user-oss-js-upload';
 // 创建的角色的名称, 可以自己设置
