@@ -34,10 +34,11 @@
 
 #### 配置方法一
 
-使用 RAM 的 Open API 进行配置
+使用 RAM 的 Open API 进行配置，也需要先在控制台开通 RAM 服务。
 
 - 打开本代码中的 setupRAM.js
 - 在阿里云控制台中找到自己账号的 id 并填入
+- 将自己的根 AccessKey 和 AccessSecret 填入
 - node setupRAM.js
 - 如果创建成功, 会打印出 assumeRole 所需的 accessKeyId, accessKeySecret 和 roleARN, 记录下来
 
