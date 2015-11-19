@@ -157,7 +157,16 @@
       };
       _extend(params, options.headers);
 
-      self.oss.putObject(params, callback);
+      var req = self.oss.putObject(params, callback);
+
+      req.on('httpUploadProgress', function(p) {
+        if (typeof options.onprogress == 'function') {
+          options.onprogress({
+            loaded: p.loaded,
+            total: file.size
+          });
+        }
+      });
     };
 
     var uploadMultipart = function (result, callback) {
@@ -217,7 +226,13 @@
         var tryNum = 1;
 
         var doUpload = function () {
-          self.oss.uploadPart(partParams, function (multiErr, mData) {
+
+          multipartMap.Parts[partNum] = {
+            PartNumber: partNum + 1,
+            loaded: 0
+          };
+
+          var req = self.oss.uploadPart(partParams, function (multiErr, mData) {
             if (multiErr) {
               // console.log('multiErr, upload part error:', multiErr);
               if (tryNum > maxUploadTries) {
@@ -226,19 +241,20 @@
               }
               else {
                 console.log('重新上传分片: #', partParams.PartNumber);
+                multipartMap.Parts[partNum].loaded = 0;
                 tryNum++;
                 doUpload();
               }
               return;
             }
+
+            multipartMap.Parts[partNum].ETag = mData.ETag;
+            multipartMap.Parts[partNum].loaded = partParams.Body.byteLength;
+
             // console.log(mData);
             concurrency--;
 
-            multipartMap.Parts[partNum] = {
-              ETag: mData.ETag,
-              PartNumber: partNum + 1
-            };
-             console.log("Completed part", partNum + 1);
+            console.log("Completed part", partNum + 1);
              //console.log('mData', mData);
 
             loadedNum++;
@@ -249,6 +265,22 @@
               uploadPart(latestUploadNum + 1);
             }
           });
+
+          req.on('httpUploadProgress', function(p) {
+            multipartMap.Parts[partNum].loaded = p.loaded;
+
+            var loaded = 0;
+            for(var i in multipartMap.Parts) {
+              loaded += multipartMap.Parts[i].loaded;
+            }
+
+            if (typeof options.onprogress == 'function') {
+              options.onprogress({
+                loaded: loaded,
+                total: file.size
+              });
+            }
+          });
         };
 
         doUpload();
@@ -257,6 +289,10 @@
 
       var complete = function () {
         // console.log("Completing upload...");
+
+        for(var i in multipartMap.Parts) {
+          delete multipartMap.Parts[i].loaded;
+        }
 
         var doneParams = {
           Bucket: self._config.bucket,

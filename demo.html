@@ -79,6 +79,10 @@
                 // oss 支持的 header, 目前仅支持 x-oss-server-side-encryption
                 'ServerSideEncryption': ''
               },
+              // 文件上传中调用, 可选参数
+              onprogress: function (evt) {
+                console.log(evt);
+              },
               // 文件上传失败后调用, 可选参数
               onerror: function (evt) {
                 console.log(evt);

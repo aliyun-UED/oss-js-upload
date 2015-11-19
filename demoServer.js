@@ -24,7 +24,7 @@ if (!resource) {
   return;
 }
 
-app.use(serveStatic(__dirname, {'index': ['test.html']}));
+app.use(serveStatic(__dirname, {'index': ['demo.html']}));
 
 app.get('/token', function (req, res) {
   sts.assumeRole({
