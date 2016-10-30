@@ -1,7 +1,7 @@
 # oss-js-upload
 
-## 技术支持
-请加旺旺群：1489391962
+## 目前不再维护
+请使用 https://help.aliyun.com/document_detail/32069.html
 
 ## 简介
 支持在在浏览器端直接上传文件到阿里云 OSS.
